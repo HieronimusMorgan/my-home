@@ -1,3 +1,15 @@
+CREATE TABLE roles
+(
+    role_id    SERIAL PRIMARY KEY,                  -- Auto-incremented unique identifier for roles
+    name       VARCHAR(255) UNIQUE NOT NULL,        -- Unique name of the role (e.g., Admin, User)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
+    created_by VARCHAR(255),                        -- User or system that created this role
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
+    updated_by VARCHAR(255),                        -- User or system that updated this role
+    deleted_at BOOLEAN   DEFAULT FALSE,
+    deleted_by VARCHAR(255)                         -- User or system that deleted this role
+);
+
 CREATE TABLE users
 (
     user_id         SERIAL PRIMARY KEY,                                                        -- Auto-incremented unique identifier
@@ -12,23 +24,11 @@ CREATE TABLE users
     profile_picture TEXT,                                                                      -- Optional profile picture URL or path
     role_id         INT                 NOT NULL REFERENCES roles (role_id) ON DELETE CASCADE, -- Foreign key to the roles table
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                       -- Timestamp of creation
-    created_by      VARCHAR(255),                                                              -- Who created this record
+    created_by      VARCHAR(255),                                                              -- User or system that created this role
     updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                       -- Timestamp of last update
-    updated_by      VARCHAR(255),                                                              -- Who updated this record
-    deleted_at      TIMESTAMP,                                                                 -- Timestamp of soft deletion (nullable for non-deleted)
-    deleted_by      VARCHAR(255)                                                               -- Who deleted this record
-);
-
-CREATE TABLE roles
-(
-    role_id    SERIAL PRIMARY KEY,                  -- Auto-incremented unique identifier for roles
-    name       VARCHAR(255) UNIQUE NOT NULL,        -- Unique name of the role (e.g., Admin, User)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
-    created_by VARCHAR(255),                        -- User or system that created this role
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
-    updated_by VARCHAR(255),                        -- User or system that updated this role
-    deleted_at TIMESTAMP,                           -- Timestamp for soft deletion (nullable for active records)
-    deleted_by VARCHAR(255)                         -- User or system that deleted this role
+    updated_by      VARCHAR(255),                                                              -- User or system that updated this role
+    deleted_at      BOOLEAN   DEFAULT FALSE,
+    deleted_by      VARCHAR(255)                                                               -- User or system that deleted this role
 );
 
 CREATE TABLE tokens
@@ -39,11 +39,11 @@ CREATE TABLE tokens
     refresh_token TEXT    NOT NULL,
     expired       BOOLEAN NOT NULL DEFAULT FALSE,                                         -- Indicates if the token is expired
     created_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,                             -- Timestamp of creation
-    created_by    VARCHAR(255),                                                           -- User or system that created the token
+    created_by    VARCHAR(255),                                                           -- User or system that created this role
     updated_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,                             -- Timestamp of last update
-    updated_by    VARCHAR(255),                                                           -- User or system that updated the token
-    deleted_at    TIMESTAMP,                                                              -- Timestamp for soft deletion (nullable for active records)
-    deleted_by    VARCHAR(255),                                                           -- User or system that deleted the token
+    updated_by    VARCHAR(255),                                                           -- User or system that updated this role
+    deleted_at    BOOLEAN          DEFAULT FALSE,
+    deleted_by    VARCHAR(255),                                                           -- User or system that deleted this role
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE -- Foreign key constraint
 );
 
@@ -52,12 +52,12 @@ CREATE TABLE product_categories
     category_id SERIAL PRIMARY KEY,                  -- Auto-incrementing primary key
     name        VARCHAR(255) NOT NULL UNIQUE,        -- Unique name for the category
     description TEXT,                                -- Optional description
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Default to current timestamp
-    created_by  VARCHAR(255),                        -- User who created the record
-    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Default to current timestamp
-    updated_by  VARCHAR(255),                        -- User who last updated the record
-    deleted_at  TIMESTAMP,                           -- Timestamp for soft deletion
-    deleted_by  VARCHAR(255)                         -- User who deleted the record
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
+    created_by  VARCHAR(255),                        -- User or system that created this role
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
+    updated_by  VARCHAR(255),                        -- User or system that updated this role
+    deleted_at  BOOLEAN   DEFAULT FALSE,
+    deleted_by  VARCHAR(255)                         -- User or system that deleted this role
 );
 
 CREATE TABLE products
@@ -68,26 +68,26 @@ CREATE TABLE products
     price          NUMERIC(10, 2) NOT NULL,             -- Product price with precision
     stock_quantity INT            NOT NULL,             -- Stock quantity
     category_id    INT            NOT NULL,             -- Foreign key to product_categories
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Default to current timestamp
-    created_by     VARCHAR(255),                        -- User who created the record
-    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Default to current timestamp
-    updated_by     VARCHAR(255),                        -- User who last updated the record
-    deleted_at     TIMESTAMP,                           -- Timestamp for soft deletion
-    deleted_by     VARCHAR(255),                        -- User who deleted the record
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
+    created_by     VARCHAR(255),                        -- User or system that created this role
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
+    updated_by     VARCHAR(255),                        -- User or system that updated this role
+    deleted_at     BOOLEAN   DEFAULT FALSE,
+    deleted_by     VARCHAR(255),                        -- User or system that deleted this role
     CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES product_categories (category_id) ON DELETE CASCADE
 );
 
-CREATE TABLE financials
+CREATE TABLE balances
 (
-    financial_id SERIAL PRIMARY KEY,                                                      -- Auto-incrementing primary key
-    user_id      INT            NOT NULL,                                                 -- Foreign key reference to the Users table
-    balance      NUMERIC(10, 2) NOT NULL,                                                 -- Financial balance with precision
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                     -- Timestamp for creation
-    created_by   VARCHAR(255),                                                            -- User who created the record
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                     -- Timestamp for last update
-    updated_by   VARCHAR(255),                                                            -- User who last updated the record
-    deleted_at   TIMESTAMP,                                                               -- Timestamp for soft deletion
-    deleted_by   VARCHAR(255),                                                            -- User who deleted the record
+    balance_id SERIAL PRIMARY KEY,                                                        -- Auto-incrementing primary key
+    user_id    INT            NOT NULL,                                                   -- Foreign key reference to the Users table
+    balance    NUMERIC(10, 2) NOT NULL,                                                   -- Balances balance with precision
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                       -- Timestamp of creation
+    created_by VARCHAR(255),                                                              -- User or system that created this role
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                       -- Timestamp of last update
+    updated_by VARCHAR(255),                                                              -- User or system that updated this role
+    deleted_at BOOLEAN   DEFAULT FALSE,
+    deleted_by VARCHAR(255),                                                              -- User or system that deleted this role
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE -- Foreign key constraint
 );
 
@@ -97,12 +97,12 @@ CREATE TABLE asset_categories
     asset_category_id SERIAL PRIMARY KEY,
     name              VARCHAR(255) NOT NULL UNIQUE,
     description       TEXT,
-    created_at        TIMESTAMP,
-    created_by        VARCHAR(255),
-    updated_at        TIMESTAMP,
-    updated_by        VARCHAR(255),
-    deleted_at        TIMESTAMP,
-    deleted_by        VARCHAR(255)
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
+    created_by        VARCHAR(255),                        -- User or system that created this role
+    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
+    updated_by        VARCHAR(255),                        -- User or system that updated this role
+    deleted_at        BOOLEAN   DEFAULT FALSE,
+    deleted_by        VARCHAR(255)                         -- User or system that deleted this role
 );
 
 -- Table for Asset
@@ -114,12 +114,12 @@ CREATE TABLE assets
     value             NUMERIC(18, 2) NOT NULL,
     acquisition_date  TIMESTAMP,
     asset_category_id INT            NOT NULL,
-    created_at        TIMESTAMP,
-    created_by        VARCHAR(255),
-    updated_at        TIMESTAMP,
-    updated_by        VARCHAR(255),
-    deleted_at        TIMESTAMP,
-    deleted_by        VARCHAR(255),
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
+    created_by        VARCHAR(255),                        -- User or system that created this role
+    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
+    updated_by        VARCHAR(255),                        -- User or system that updated this role
+    deleted_at        BOOLEAN   DEFAULT FALSE,
+    deleted_by        VARCHAR(255),                        -- User or system that deleted this role
     FOREIGN KEY (asset_category_id) REFERENCES asset_categories (asset_category_id)
 );
 
@@ -132,76 +132,105 @@ CREATE TABLE asset_maintenances
     notes                 TEXT,
     maintenance_date      TIMESTAMP,
     next_maintenance_date TIMESTAMP,
-    created_at            TIMESTAMP,
-    created_by            VARCHAR(255),
-    updated_at            TIMESTAMP,
-    updated_by            VARCHAR(255),
-    deleted_at            TIMESTAMP,
-    deleted_by            VARCHAR(255),
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
+    created_by            VARCHAR(255),                        -- User or system that created this role
+    updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
+    updated_by            VARCHAR(255),                        -- User or system that updated this role
+    deleted_at            BOOLEAN   DEFAULT FALSE,
+    deleted_by            VARCHAR(255),                        -- User or system that deleted this role
     FOREIGN KEY (asset_id) REFERENCES assets (asset_id)
 );
 
+CREATE TABLE password_managers
+(
+    password_id SERIAL PRIMARY KEY,                  -- Auto-incrementing primary key
+    user_id     BIGINT NOT NULL,                     -- User ID, required
+    name        TEXT,                                -- Name of the password
+    password    TEXT,                                -- Password field
+    description TEXT,                                -- Description of the password
+    expired     BOOLEAN   DEFAULT FALSE,             -- Expired status
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of creation
+    created_by  TEXT,                                -- Who created the record
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of last update
+    updated_by  TEXT,                                -- Who updated the record
+    deleted_at  BOOLEAN   DEFAULT FALSE,
+    deleted_by  TEXT,                                -- Who deleted the record
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);
+
 CREATE
-OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+    OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS
+$$
 BEGIN
     NEW.updated_at
-= CURRENT_TIMESTAMP;
-RETURN NEW;
+        = CURRENT_TIMESTAMP;
+    RETURN NEW;
 END;
 $$
-LANGUAGE plpgsql;
+    LANGUAGE plpgsql;
 
-CREATE TRIGGER set_updated_at_asset_category
+CREATE TRIGGER set_updated_at_password_managers
     BEFORE UPDATE
-    ON asset_category
+    ON password_managers
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at_asset
+CREATE TRIGGER set_updated_at_roles
     BEFORE UPDATE
-    ON asset
+    ON roles
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at_asset_maintenance
+CREATE TRIGGER set_updated_users
     BEFORE UPDATE
-    ON asset_maintenance
+    ON users
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at_financial
+CREATE TRIGGER set_updated_tokens
     BEFORE UPDATE
-    ON financial
+    ON tokens
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at_product_category
+CREATE TRIGGER set_updated_at_product_categories
     BEFORE UPDATE
-    ON product_category
+    ON product_categories
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at_product
+CREATE TRIGGER set_updated_at_products
     BEFORE UPDATE
-    ON product
+    ON products
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at_role
+CREATE TRIGGER set_updated_at_balances
     BEFORE UPDATE
-    ON role
+    ON balances
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_token
+CREATE TRIGGER set_updated_at_asset_categories
     BEFORE UPDATE
-    ON token
+    ON asset_categories
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_user
+CREATE TRIGGER set_updated_at_assets
     BEFORE UPDATE
-    ON master_data."user"
+    ON assets
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER set_updated_at_asset_maintenances
+    BEFORE UPDATE
+    ON asset_maintenances
+    FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+INSERT INTO roles (name, created_by)
+VALUES ('Admin', 'system');
+INSERT INTO roles (name, created_by)
+VALUES ('User', 'system');

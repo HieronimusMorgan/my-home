@@ -1,25 +1,27 @@
 package services
 
 import (
-	"Master_Data/module/domain"
+	"Master_Data/module/domain/master"
 	"Master_Data/module/dto/in"
+	"Master_Data/module/dto/out"
 	"Master_Data/module/repository"
 	"Master_Data/utils"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
 )
 
 type AuthService struct {
-	UserRepository      *repository.UserRepository
-	FinancialRepository *repository.FinancialRepository
-	TokenRepository     *repository.TokenRepository
+	UserRepository     *repository.UserRepository
+	BalancesRepository *repository.BalancesRepository
+	TokenRepository    *repository.TokenRepository
 }
 
 func NewAuthService(db *gorm.DB) *AuthService {
 	userRepo := repository.NewUserRepository(db)
-	financialRepo := repository.NewFinancialRepository(db)
+	balancesRepo := repository.NewBalancesRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
-	return &AuthService{UserRepository: userRepo, FinancialRepository: financialRepo, TokenRepository: tokenRepo}
+	return &AuthService{UserRepository: userRepo, BalancesRepository: balancesRepo, TokenRepository: tokenRepo}
 }
 
 func (s AuthService) Register(i *in.RegisterRequest) (interface{}, error) {
@@ -35,8 +37,11 @@ func (s AuthService) Register(i *in.RegisterRequest) (interface{}, error) {
 	firstName := utils.ValidationTrimSpace(i.FirstName)
 	lastName := utils.ValidationTrimSpace(i.LastName)
 	fullName := firstName + " " + lastName
+	userUUID := uuid.New().String()
 
-	user := domain.User{
+	user := master.User{
+		UUIDKey:        userUUID,
+		ClientID:       utils.GenerateClientID(),
 		Username:       i.Username,
 		Password:       pass,
 		FirstName:      firstName,
@@ -55,11 +60,11 @@ func (s AuthService) Register(i *in.RegisterRequest) (interface{}, error) {
 		return nil, err
 	}
 
-	financial := domain.Financial{
-		UserID:  newUser.(domain.User).UserID,
+	balances := master.Balance{
+		UserID:  newUser.(master.User).UserID,
 		Balance: 0.0,
 	}
-	err = s.FinancialRepository.CreateFinancial(&financial)
+	err = s.BalancesRepository.CreateBalances(&balances)
 	if err != nil {
 		return nil, err
 	}
@@ -68,14 +73,20 @@ func (s AuthService) Register(i *in.RegisterRequest) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	mapToken := map[string]interface{}{
-		"user":      newUser.(domain.User),
-		"financial": financial,
-		"token":     token,
+
+	response := out.RegisterResponse{
+		UserID:         newUser.(master.User).UserID,
+		Username:       newUser.(master.User).Username,
+		FirstName:      newUser.(master.User).FirstName,
+		LastName:       newUser.(master.User).LastName,
+		PhoneNumber:    newUser.(master.User).PhoneNumber,
+		ProfilePicture: newUser.(master.User).ProfilePicture,
+		Balance:        balances.Balance,
+		Token:          token,
 	}
-	utils.SaveTokenToRedis(newUser.(domain.User).ClientID, token, time.Hour*24)
-	utils.SaveDataToRedis("user", newUser.(domain.User).ClientID, newUser)
-	return mapToken, nil
+	utils.SaveTokenToRedis(newUser.(master.User).ClientID, token, time.Hour*24)
+	utils.SaveDataToRedis("user", newUser.(master.User).ClientID, newUser)
+	return response, nil
 }
 
 func (s AuthService) Login(i *struct {
@@ -87,34 +98,41 @@ func (s AuthService) Login(i *struct {
 		return nil, err
 	}
 
-	err = utils.CheckPassword(user.(domain.User).Password, i.Password)
+	err = utils.CheckPassword(user.(master.User).Password, i.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	financial, err := s.FinancialRepository.GetFinancialByUserID(user.(domain.User).UserID)
+	balances, err := s.BalancesRepository.GetBalancesByUserID(user.(master.User).UserID)
+
 	if err != nil {
 		return nil, err
 
 	}
-	token, err := utils.GenerateToken(user.(domain.User))
+	token, err := utils.GenerateToken(user.(master.User))
 	if err != nil {
 		return nil, err
 	}
 	refreshToken, err := utils.GenerateRefreshToken()
-	s.TokenRepository.CreateToken(user.(domain.User), token, refreshToken)
+	s.TokenRepository.CreateToken(user.(master.User), token, refreshToken)
 
-	utils.SaveTokenToRedis(user.(domain.User).ClientID, token, time.Hour*24)
-	utils.SaveDataToRedis("user", user.(domain.User).ClientID, user)
+	utils.SaveTokenToRedis(user.(master.User).ClientID, token, time.Hour*24)
+	utils.SaveDataToRedis("user", user.(master.User).ClientID, user)
 
-	mapToken := map[string]interface{}{
-		"user":          utils.ConvertUserToResponse(user.(domain.User)),
-		"balance":       financial.(domain.Financial).Balance,
-		"token":         token,
-		"refresh_token": refreshToken,
+	loginResponse := out.LoginResponse{
+		UserID:         user.(master.User).UserID,
+		ClientID:       user.(master.User).ClientID,
+		Username:       user.(master.User).Username,
+		FirstName:      user.(master.User).FirstName,
+		LastName:       user.(master.User).LastName,
+		PhoneNumber:    user.(master.User).PhoneNumber,
+		ProfilePicture: user.(master.User).ProfilePicture,
+		Balance:        balances.(master.Balance).Balance,
+		Token:          token,
+		RefreshToken:   refreshToken,
 	}
 
-	return mapToken, nil
+	return loginResponse, nil
 }
 
 func (s AuthService) RefreshToken(token, refreshToken string) (interface{}, error) {
@@ -128,21 +146,21 @@ func (s AuthService) RefreshToken(token, refreshToken string) (interface{}, erro
 		return nil, err
 	}
 
-	token, err = utils.GenerateToken(user.(domain.User))
+	token, err = utils.GenerateToken(user.(master.User))
 	if err != nil {
 		return nil, err
 	}
 	refreshToken, err = utils.GenerateRefreshToken()
-	err = s.TokenRepository.RefreshToken(user.(domain.User), token, refreshToken)
+	err = s.TokenRepository.RefreshToken(user.(master.User), token, refreshToken)
 	if err != nil {
 		return nil, err
 	}
 
-	utils.SaveTokenToRedis(user.(domain.User).ClientID, token, time.Hour*24)
-	utils.SaveDataToRedis("user", user.(domain.User).ClientID, user)
+	utils.SaveTokenToRedis(user.(master.User).ClientID, token, time.Hour*24)
+	utils.SaveDataToRedis("user", user.(master.User).ClientID, user)
 
 	mapToken := map[string]interface{}{
-		"user":          utils.ConvertUserToResponse(user.(domain.User)),
+		"user":          utils.ConvertUserToResponse(user.(master.User)),
 		"token":         token,
 		"refresh_token": refreshToken,
 	}
@@ -161,9 +179,9 @@ func (s AuthService) Logout(token string) error {
 	if err != nil {
 		return err
 	}
-	utils.DeleteTokenFromRedis(user.(domain.User).ClientID)
+	utils.DeleteTokenFromRedis(user.(master.User).ClientID)
 
-	err = s.TokenRepository.DeleteToken(user.(domain.User).UserID)
+	err = s.TokenRepository.DeleteToken(user.(master.User).UserID)
 	if err != nil {
 		return err
 	}

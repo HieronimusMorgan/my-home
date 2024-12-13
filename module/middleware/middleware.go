@@ -13,12 +13,14 @@ func MasterDataMiddleware() gin.HandlerFunc {
 		token := c.GetHeader("Authorization")
 		if token == "" {
 			response.SendResponse(c, http.StatusUnauthorized, "Missing token", nil, "Missing token")
+			c.Abort()
 			return
 		}
 
 		claims, err := utils.ValidateJWT(token)
 		if err != nil {
 			response.SendResponse(c, http.StatusUnauthorized, "Invalid token", nil, "Invalid token")
+			c.Abort()
 			return
 		}
 

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"Master_Data/module/domain"
+	"Master_Data/module/domain/master"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
@@ -14,17 +14,7 @@ import (
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
-func GenerateJWT(userID uint, clientID string) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":   userID,
-		"client_id": clientID,
-		"exp":       time.Now().Add(time.Hour * 24).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
-}
-
-func GenerateToken(user domain.User) (string, error) {
+func GenerateToken(user master.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":   user.UserID,
 		"client_id": user.ClientID,
@@ -37,14 +27,12 @@ func GenerateToken(user domain.User) (string, error) {
 }
 
 func GenerateRefreshToken() (string, error) {
-	// Create a random 32-byte token
 	bytes := make([]byte, 32)
 	_, err := rand.Read(bytes)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	// Encode the token to a base64 string
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
@@ -55,19 +43,16 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 }
 
 func GetClientIDFromToken(tokenString string) (interface{}, error) {
-	// Validate and parse the JWT
 	token, err := ValidateJWT(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	// Extract the claims
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token claims")
 	}
 
-	// Get the user_id from claims
 	clientID, exists := claims["client_id"]
 	if !exists {
 		return nil, errors.New("client_id not found in token claims")
@@ -76,21 +61,82 @@ func GetClientIDFromToken(tokenString string) (interface{}, error) {
 	return clientID, nil
 }
 
-func GetUserIDFromToken(tokenString string) (interface{}, error) {
-	// Validate and parse the JWT
+func GetRoleIDFromToken(tokenString string) (interface{}, error) {
 	token, err := ValidateJWT(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	// Extract the claims
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token claims")
 	}
 
-	// Get the user_id from claims
-	clientID, exists := claims["user_id"]
+	clientID, exists := claims["role_id"]
+	if !exists {
+		return nil, errors.New("client_id not found in token claims")
+	}
+
+	return clientID, nil
+}
+
+func GetUserIDFromToken(tokenString string) (uint, error) {
+	token, err := ValidateJWT(tokenString)
+	if err != nil {
+		return 0, err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return 0, errors.New("invalid token claims")
+	}
+
+	// Extract user_id from claims
+	userIDFloat, exists := claims["user_id"]
+	if !exists {
+		return 0, errors.New("user_id not found in token claims")
+	}
+
+	// Convert user_id to uint
+	userIDFloat64, ok := userIDFloat.(float64)
+	if !ok {
+		return 0, errors.New("user_id is not a valid number")
+	}
+
+	userID := uint(userIDFloat64)
+	return userID, nil
+}
+
+func GetUUIDFromToken(tokenString string) (interface{}, error) {
+	token, err := ValidateJWT(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token claims")
+	}
+
+	clientID, exists := claims["uuid_key"]
+	if !exists {
+		return nil, errors.New("user_id not found in token claims")
+	}
+
+	return clientID, nil
+}
+
+func GetExpFromToken(tokenString string) (interface{}, error) {
+	token, err := ValidateJWT(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token claims")
+	}
+
+	clientID, exists := claims["exp"]
 	if !exists {
 		return nil, errors.New("user_id not found in token claims")
 	}

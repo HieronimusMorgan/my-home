@@ -2,7 +2,7 @@ package database
 
 import (
 	"Master_Data/config"
-	"Master_Data/module/domain"
+	"Master_Data/module/domain/master"
 	"github.com/golang-migrate/migrate/v4"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
@@ -28,11 +28,11 @@ func InitDB() *gorm.DB {
 		NamingStrategy: schemaNamingStrategy(cfg.DBSchema), // Set the schema
 	})
 
-	db.AutoMigrate(&domain.User{}, &domain.Financial{},
-		&domain.Asset{}, &domain.AssetCategory{},
-		&domain.AssetMaintenance{},
-		&domain.Product{}, &domain.ProductCategory{},
-		&domain.Roles{}, &domain.Token{})
+	db.AutoMigrate(&master.User{}, &master.Balance{},
+		&master.Asset{}, &master.AssetCategory{},
+		&master.AssetMaintenance{},
+		&master.Product{}, &master.ProductCategory{},
+		&master.Roles{}, &master.Token{}, &master.PasswordManager{})
 	//Run migrations
 	//migrationsPath := "file://./migrations"
 	//RunMigrations(dsn, migrationsPath)

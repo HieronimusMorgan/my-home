@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"Master_Data/module/domain"
+	"Master_Data/module/domain/master"
 	"fmt"
 	"gorm.io/gorm"
 )
@@ -14,15 +14,15 @@ func NewTokenRepository(db *gorm.DB) *TokenRepository {
 	return &TokenRepository{DB: db}
 }
 
-func (r TokenRepository) CreateToken(user domain.User, token, refreshToken string) error {
+func (r TokenRepository) CreateToken(user master.User, token, refreshToken string) error {
 	tx := r.DB.Begin()
 	if err := tx.Error; err != nil {
 		return err
 	}
-	var existingToken domain.Token
+	var existingToken master.Token
 	if err := tx.Where("user_id = ?", user.UserID).First(&existingToken).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			newToken := domain.Token{
+			newToken := master.Token{
 				UserID:       user.UserID,
 				Token:        token,
 				RefreshToken: refreshToken,
@@ -55,17 +55,17 @@ func (r TokenRepository) CreateToken(user domain.User, token, refreshToken strin
 }
 
 func (r TokenRepository) GetToken(userID uint) (interface{}, error) {
-	var token domain.Token
+	var token master.Token
 	err := r.DB.Where("user_id = ?", userID).First(&token).Error
 	return token, err
 }
 
-func (r TokenRepository) RefreshToken(user domain.User, token, refreshToken string) error {
+func (r TokenRepository) RefreshToken(user master.User, token, refreshToken string) error {
 	tx := r.DB.Begin()
 	if err := tx.Error; err != nil {
 		return err
 	}
-	var existingToken domain.Token
+	var existingToken master.Token
 	if err := tx.Where("user_id = ?", user.UserID).First(&existingToken).Error; err == nil {
 		if err := tx.Model(&existingToken).
 			Updates(map[string]interface{}{
@@ -87,7 +87,7 @@ func (r TokenRepository) DeleteToken(userID uint) error {
 		return err
 	}
 
-	var token domain.Token
+	var token master.Token
 	if err := tx.Where("user_id = ?", userID).First(&token).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			tx.Rollback()

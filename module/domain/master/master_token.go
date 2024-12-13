@@ -1,4 +1,4 @@
-package domain
+package master
 
 import (
 	"gorm.io/gorm"
@@ -15,7 +15,7 @@ type Token struct {
 	CreatedBy    string    `json:"created_by,omitempty"`
 	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 	UpdatedBy    string    `json:"updated_by,omitempty"`
-	DeletedAt    time.Time `json:"deleted_at,omitempty"`
+	DeletedAt    bool      `json:"deleted_at,omitempty"`
 	DeletedBy    string    `json:"deleted_by,omitempty"`
 }
 

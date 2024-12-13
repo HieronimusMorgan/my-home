@@ -24,6 +24,9 @@ func main() {
 	// Register routes
 	routes.UserRoutes(r, db)
 	routes.AuthRoutes(r, db)
+	routes.BalancesRoutes(r, db)
+	routes.AssetRoutes(r, db)
+	routes.PasswordManagerRoutes(r, db)
 
 	// Run server
 	log.Println("Starting server on :8080")

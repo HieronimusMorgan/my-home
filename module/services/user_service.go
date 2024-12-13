@@ -1,7 +1,7 @@
 package services
 
 import (
-	"Master_Data/module/domain"
+	"Master_Data/module/domain/master"
 	"Master_Data/module/dto/in"
 	"Master_Data/module/repository"
 	"Master_Data/utils"
@@ -10,14 +10,14 @@ import (
 )
 
 type UserService struct {
-	UserRepository      *repository.UserRepository
-	FinancialRepository *repository.FinancialRepository
+	UserRepository     *repository.UserRepository
+	BalancesRepository *repository.BalancesRepository
 }
 
 func NewUserService(db *gorm.DB) *UserService {
 	userRepo := repository.NewUserRepository(db)
-	financialRepo := repository.NewFinancialRepository(db)
-	return &UserService{UserRepository: userRepo, FinancialRepository: financialRepo}
+	balancesRepo := repository.NewBalancesRepository(db)
+	return &UserService{UserRepository: userRepo, BalancesRepository: balancesRepo}
 }
 
 func (s UserService) CreateUser(i *in.RegisterRequest) (interface{}, error) {
@@ -33,7 +33,7 @@ func (s UserService) CreateUser(i *in.RegisterRequest) (interface{}, error) {
 	lastName := utils.ValidationTrimSpace(i.LastName)
 	fullName := firstName + " " + lastName
 
-	user := domain.User{
+	user := master.User{
 		Username:       i.Username,
 		Password:       pass,
 		FirstName:      firstName,
@@ -60,11 +60,11 @@ func (s UserService) CreateUser(i *in.RegisterRequest) (interface{}, error) {
 		return nil, err
 	}
 	mapToken := map[string]interface{}{
-		"user":  newUser.(domain.User),
+		"user":  newUser.(master.User),
 		"token": token,
 	}
-	utils.SaveTokenToRedis(newUser.(domain.User).ClientID, token, time.Hour*24)
-	utils.SaveDataToRedis("user", newUser.(domain.User).ClientID, newUser)
+	utils.SaveTokenToRedis(newUser.(master.User).ClientID, token, time.Hour*24)
+	utils.SaveDataToRedis("user", newUser.(master.User).ClientID, newUser)
 	return mapToken, nil
 }
 
