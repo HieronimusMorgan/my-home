@@ -9,6 +9,7 @@ import (
 	"errors"
 	"golang.org/x/crypto/bcrypt"
 	"io"
+	"strings"
 	"unicode"
 )
 
@@ -50,19 +51,22 @@ func ValidatePassword(password string) error {
 		}
 	}
 
-	// Check for spaces
+	var validationErrors []string
+
 	if hasSpace {
-		return errors.New("password must not contain spaces")
+		validationErrors = append(validationErrors, "password must not contain spaces")
 	}
 
-	// Check for at least one number
 	if !hasNumber {
-		return errors.New("password must contain at least one number")
+		validationErrors = append(validationErrors, "password must contain at least one number")
 	}
 
-	// Check for at least one symbol
 	if !hasSymbol {
-		return errors.New("password must contain at least one symbol")
+		validationErrors = append(validationErrors, "password must contain at least one symbol")
+	}
+
+	if len(validationErrors) > 0 {
+		return errors.New("password validation failed: " + strings.Join(validationErrors, ", "))
 	}
 
 	return nil

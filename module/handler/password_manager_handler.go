@@ -35,7 +35,7 @@ func (h PasswordManagerHandler) AddPassword(context *gin.Context) {
 	}
 	passwordManager, err := h.PasswordManagerService.AddPassword(req.Name, &req.Password, req.Description, clientID.(string))
 	if err != nil {
-		response.SendResponse(context, 500, "Failed to add password", nil, err)
+		response.SendResponse(context, 400, "Failed to add password", nil, err)
 		return
 	}
 
@@ -51,5 +51,12 @@ func (h PasswordManagerHandler) DeletePassword(context *gin.Context) {
 }
 
 func (h PasswordManagerHandler) GetPassword(context *gin.Context) {
+	//name := context.Param("name")
+	//clientID, err := utils.GetClientIDFromToken(context.GetHeader("Authorization"))
+	//if err != nil {
+	//	response.SendResponse(context, 500, "Failed to get user id from token", nil, err)
+	//	return
+	//}
+	//passwordManager, err := h.PasswordManagerService.GetPassword(name, clientID.(string))
 
 }

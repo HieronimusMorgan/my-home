@@ -23,9 +23,12 @@ func (s PasswordManagerService) AddPassword(name string, password *string, descr
 	if err != nil {
 		return nil, err
 	}
-	err = utils.ValidatePassword(password)
+	err = utils.ValidatePassword(*password)
+	if err != nil {
+		return nil, err
+	}
 
-	passwordEncrypt, err := utils.EncryptAES(password, user.(master.User).ClientID)
+	passwordEncrypt, err := utils.EncryptAES(*password, user.(master.User).ClientID)
 
 	passwordManager := master.PasswordManager{
 		UserID:      user.(master.User).UserID,
